@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bento2-core.iml" filepath="$PROJECT_DIR$/.idea/modules/bento2-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bento2-core_main.iml" filepath="$PROJECT_DIR$/.idea/modules/bento2-core_main.iml" group="bento2-core" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bento2-core_test.iml" filepath="$PROJECT_DIR$/.idea/modules/bento2-core_test.iml" group="bento2-core" />
+    </modules>
+  </component>
+</project>
