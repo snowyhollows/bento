@@ -23,13 +23,17 @@ public class BentoTest {
         }
     }
 
-    final BentoFactory<Person> PERSON = (ctx) -> {
-        return new Person(
-                ctx.getEnum(Type.class, "type"),
-                ctx.getString("name"),
-                ctx.getString("lastName"),
-                ctx.getInt("height")
-        );
+    final BentoFactory<Person> PERSON = new BentoFactory<Person>() {
+        @Override
+        public Person createInContext(Bento ctx) {
+            return new Person(
+                    ctx.getEnum(Type.class, "type"),
+                    ctx.getString("name"),
+                    ctx.getString("lastName"),
+                    ctx.getInt("height")
+            );
+
+        }
     };
 
     Bento bento = Bento.createRoot();

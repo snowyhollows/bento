@@ -8,7 +8,7 @@ public class MapStore implements BentoStore {
     private final Map<String, Object> data;
 
     public MapStore() {
-        this.data = new HashMap<>();
+        this.data = new HashMap<String, Object>();
     }
 
     @Override
