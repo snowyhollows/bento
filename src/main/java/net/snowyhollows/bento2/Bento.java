@@ -34,10 +34,6 @@ public final class Bento {
         return o;
     }
 
-    public<T> T get(String key) {
-        return (T)retrieveObjectOrFail(key);
-    }
-
     public int getInt(String key) {
         return Integer.parseInt(retrieveObjectOrFail(key).toString());
     }
@@ -82,14 +78,17 @@ public final class Bento {
         store.put(key, value);
     }
 
-    public<T> T registerFactory(String key, BentoFactory<T> bentoFactory) {
-        T object = bentoFactory.createInContext(this);
-        store.put(key, object);
-        return object;
+    public void registerFactory(String key, BentoFactory bentoFactory) {
+        store.put(key, bentoFactory);
+    }
+
+    public<T> T registerObject(String key, T o) {
+        store.put(key, o);
+        return o;
     }
 
     public<T> T get(BentoFactory<T> bentoFactory) {
-        final String key = bentoFactory.getClass().getSimpleName();
+        final String key = bentoFactory.getClass().getName();
         final Object createdEarlier = store.get(key);
         if (createdEarlier != null) {
             return (T)createdEarlier;
@@ -98,4 +97,14 @@ public final class Bento {
         store.put(key, object);
         return object;
     }
+
+    public<T> T get(String key) {
+        final Object result = retrieveObjectOrFail(key);
+        if (result instanceof BentoFactory) {
+            return (T) ((BentoFactory)result).createInContext(this);
+        }
+        return (T)result;
+    }
+
+
 }
