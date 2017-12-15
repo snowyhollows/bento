@@ -106,9 +106,23 @@ public class BentoTest {
         bento.register("height", 174);
 
         Person person1 = bento.get(PERSON);
-        Person person2 = bento.create().get(PERSON);
+        Bento child = bento.create();
+        child.registerObject(PERSON.getClass().getName(), new Person(null, null, null, 0));
+        Person person2 = child.get(PERSON);
 
         assertThat(person1).isNotSameAs(
                 person2);
+    }
+
+    @Test
+    public void childUsesParentsInstanceWithGet() {
+        bento.register("name", "Filip");
+        bento.register("lastName", "Dreger");
+        bento.register("type", Type.A);
+        bento.register("height", 174);
+        Person person1 = bento.get(PERSON);
+        Person person2 = bento.create().get(PERSON);
+
+        assertThat(person1).isSameAs(person2);
     }
 }

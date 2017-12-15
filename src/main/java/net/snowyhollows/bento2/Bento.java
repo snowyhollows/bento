@@ -89,7 +89,7 @@ public final class Bento {
 
     public<T> T get(BentoFactory<T> bentoFactory) {
         final String key = bentoFactory.getClass().getName();
-        final Object createdEarlier = store.get(key);
+        final Object createdEarlier = retrieveObjectOrNull(key);
         if (createdEarlier != null) {
             return (T)createdEarlier;
         }
