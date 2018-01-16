@@ -5,19 +5,19 @@ import java.util.Map;
 
 public class MapStore implements BentoStore {
 
-    private final Map<String, Object> data;
+    private final Map<Object, Object> data;
 
     public MapStore() {
-        this.data = new HashMap<String, Object>();
+        this.data = new HashMap<Object, Object>();
     }
 
     @Override
-    public Object get(String key) {
+    public Object get(Object key) {
         return this.data.get(key);
     }
 
     @Override
-    public void put(String key, Object value) {
+    public void put(Object key, Object value) {
         this.data.put(key, value);
     }
 

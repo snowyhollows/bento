@@ -12,7 +12,7 @@ public final class Bento {
         this.store = store;
     }
 
-    private Object retrieveObjectOrNull(String key) {
+    private Object retrieveObjectOrNull(Object key) {
         Object result = store.get(key);
         if (result != null) {
             return result;
@@ -26,7 +26,7 @@ public final class Bento {
         return null;
     }
 
-    private Object retrieveObjectOrFail(String key) {
+    private Object retrieveObjectOrFail(Object key) {
         Object o = retrieveObjectOrNull(key);
         if (o == null) {
             throw new BentoException("Couldn't retrieve " + key);
@@ -34,23 +34,23 @@ public final class Bento {
         return o;
     }
 
-    public int getInt(String key) {
-        return Integer.parseInt(retrieveObjectOrFail(key).toString());
+    public int getInt(Object key) {
+        return Integer.parseInt(getString(key));
     }
 
-    public boolean getBoolean(String key) {
-        return Boolean.parseBoolean(retrieveObjectOrFail(key).toString());
+    public boolean getBoolean(Object key) {
+        return Boolean.parseBoolean(getString(key));
     }
 
-    public float getFloat(String key) {
-        return Float.parseFloat(retrieveObjectOrFail(key).toString());
+    public float getFloat(Object key) {
+        return Float.parseFloat(getString(key));
     }
 
-    public String getString(String key) {
+    public String getString(Object key) {
         return retrieveObjectOrFail(key).toString();
     }
 
-    public<T extends Enum<T>> T getEnum(Class<T> clazz, String key) {
+    public<T extends Enum<T>> T getEnum(Class<T> clazz, Object key) {
         return Enum.valueOf(clazz, getString(key));
     }
 
@@ -58,53 +58,40 @@ public final class Bento {
         return new Bento(null, new MapStore());
     }
 
+    public static Bento run(BentoFactory<?> factory) {
+        final Bento root = createRoot();
+        root.get(factory);
+        return root;
+    }
+
     public Bento create() {
         return new Bento(this, new MapStore());
     }
 
-    public void register(String key, int anInt) {
-        store.put(key, anInt);
-    }
-
-    public<T extends Enum> void register(String key, T value) {
+    public void register(Object key, Object value) {
         store.put(key, value);
     }
 
-    public void register(String key, float value) {
-        store.put(key, value);
+    public<T> T get(BentoFactory<T> factoryAsKey) {
+        return get((Object)factoryAsKey);
     }
 
-    public void register(String key, String value) {
-        store.put(key, value);
-    }
-
-    public void registerFactory(String key, BentoFactory bentoFactory) {
-        store.put(key, bentoFactory);
-    }
-
-    public<T> T registerObject(String key, T o) {
-        store.put(key, o);
-        return o;
-    }
-
-    public<T> T get(BentoFactory<T> bentoFactory) {
-        final String key = bentoFactory.getClass().getName();
+    public<T> T get(Object key) {
         final Object createdEarlier = retrieveObjectOrNull(key);
         if (createdEarlier != null) {
+            if (createdEarlier instanceof BentoFactory) {
+                return (T) ((BentoFactory)createdEarlier).createInContext(this);
+            }
             return (T)createdEarlier;
         }
-        final T object = bentoFactory.createInContext(this);
-        store.put(key, object);
-        return object;
-    }
-
-    public<T> T get(String key) {
-        final Object result = retrieveObjectOrFail(key);
-        if (result instanceof BentoFactory) {
-            return (T) ((BentoFactory)result).createInContext(this);
+        if (key instanceof BentoFactory) {
+            final BentoFactory<T> factoryAsKey = (BentoFactory<T>)key;
+            final T object = factoryAsKey.createInContext(this);
+            store.put(factoryAsKey, object);
+            store.put(factoryAsKey.getClass().getName(), object);
+            return object;
+        } else {
+            throw new BentoException("key [" + key + "] is absent and is not a BentoFactory instance");
         }
-        return (T)result;
     }
-
-
 }

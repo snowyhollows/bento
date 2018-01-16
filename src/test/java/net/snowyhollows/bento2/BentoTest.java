@@ -3,9 +3,6 @@ package net.snowyhollows.bento2;
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * Created by fdreger on 6/25/2017.
- */
 public class BentoTest {
     private enum Type { A, B }
 
@@ -107,7 +104,7 @@ public class BentoTest {
 
         Person person1 = bento.get(PERSON);
         Bento child = bento.create();
-        child.registerObject(PERSON.getClass().getName(), new Person(null, null, null, 0));
+        child.register(PERSON, new Person(null, null, null, 0));
         Person person2 = child.get(PERSON);
 
         assertThat(person1).isNotSameAs(
