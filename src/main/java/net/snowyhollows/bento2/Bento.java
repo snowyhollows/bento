@@ -83,12 +83,10 @@ public final class Bento {
                 return (T) ((BentoFactory)createdEarlier).createInContext(this);
             }
             return (T)createdEarlier;
-        }
-        if (key instanceof BentoFactory) {
+        } else if (key instanceof BentoFactory) {
             final BentoFactory<T> factoryAsKey = (BentoFactory<T>)key;
             final T object = factoryAsKey.createInContext(this);
             store.put(factoryAsKey, object);
-            store.put(factoryAsKey.getClass().getName(), object);
             return object;
         } else {
             throw new BentoException("key [" + key + "] is absent and is not a BentoFactory instance");
