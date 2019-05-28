@@ -99,11 +99,19 @@ public final class Bento {
         inspector.createObject(this, key, value);
     }
 
-    public<T> T get(BentoFactory<T> factoryAsKey) {
-        return get((Object)factoryAsKey);
+    public<T> T get(BentoFactory<T> factoryAsKey, T ifAbsent) {
+        return get((Object)factoryAsKey, ifAbsent);
     }
 
     public<T> T get(Object key) {
+        return get(key, null);
+    }
+
+    public<T> T get(BentoFactory<T> factoryAsKey) {
+        return get((Object)factoryAsKey, null);
+    }
+
+    public<T> T get(Object key, Object ifAbsent) {
         final Object createdEarlier = retrieveObjectOrNull(key);
         if (createdEarlier != null) {
             if (createdEarlier instanceof BentoFactory) {
@@ -115,8 +123,10 @@ public final class Bento {
             final T object = factoryAsKey.createInContext(this);
             register(factoryAsKey, object);
             return object;
+        } else if (ifAbsent != null) {
+            return (T)ifAbsent;
         } else {
-            throw new BentoException("key [" + key + "] is absent and is not a BentoFactory instance");
+                throw new BentoException("key [" + key + "] is absent and is not a BentoFactory instance");
         }
     }
 }
