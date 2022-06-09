@@ -4,16 +4,11 @@ buildscript {
 	}
 }
 
-plugins {
-	id "com.jfrog.bintray" version "1.7"
-}
-
 group = 'net.snowyhollows.bento'
 version = '1.4-SNAPSHOT'
 
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 repositories {
 	jcenter()
@@ -47,29 +42,7 @@ publishing {
 	}
 }
 
-
-
-bintray {
-	user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-	key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-	publications = ['MyPublication']
-	pkg {
-		repo = 'default'
-		name = project.getName()
-		userOrg = 'snowyhollows'
-		licenses = ['Apache-2.0']
-		vcsUrl = "https://github.com/snowyhollows/bento.git"
-		version {
-			name = project.getVersion()
-		}
-	}
-}
-
-task wrapper(type: Wrapper) {
-	gradleVersion = '4.6'
-}
-
 dependencies {
-	testCompile group: 'junit', name: 'junit', version: '4.12'
-	testCompile 'org.assertj:assertj-core:2.8.0'
+	testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation 'org.assertj:assertj-core:2.8.0'
 }
