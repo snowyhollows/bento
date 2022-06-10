@@ -1,4 +1,4 @@
-# Bento - scope-oriented dependency injection
+# Bento - scope-oriented dependency injection :)
 
 Bento is an attempt at finding a set of trade-offs that would make Dependency Injection
 practical for writing games, including small ones.
