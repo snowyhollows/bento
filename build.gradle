@@ -5,6 +5,12 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+    }
+
     repositories {
         mavenCentral()
     }
