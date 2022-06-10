@@ -1,2 +1,3 @@
-rootProject.name = 'bento2-core'
+include 'bento-core'
+include 'bento-generator'
 

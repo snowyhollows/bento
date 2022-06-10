@@ -1,0 +1,18 @@
+publishing {
+    publications {
+        generatorPublication(MavenPublication) {
+            from components.java
+            artifact sourceJar
+            artifact javadocJar
+
+            groupId rootProject.getGroup()
+            artifactId project.name
+            version rootProject.getVersion()
+        }
+    }
+}
+
+dependencies {
+    implementation project(':bento-core')
+    implementation group: 'com.squareup', name: 'javapoet', version: '1.9.0'
+}
