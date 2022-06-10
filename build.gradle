@@ -28,7 +28,7 @@ subprojects {
             maven {
                 def releasesRepoUrl = "https://maven.ceon.pl/artifactory/em-releases"
                 def snapshotsRepoUrl = "https://maven.ceon.pl/artifactory/em-snapshot"
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                url = rootProject.version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 credentials {
                     username System.getenv("ARTIFACTORY_USR")
                     password System.getenv("ARTIFACTORY_PSW")
