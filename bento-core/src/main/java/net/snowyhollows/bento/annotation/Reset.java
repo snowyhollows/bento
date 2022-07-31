@@ -1,4 +1,4 @@
-package net.snowyhollows.bento2.annotation;
+package net.snowyhollows.bento.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

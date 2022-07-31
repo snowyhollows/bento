@@ -27,11 +27,11 @@ import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
-import net.snowyhollows.bento2.Bento;
-import net.snowyhollows.bento2.annotation.BentoWrapper;
-import net.snowyhollows.bento2.annotation.ByFactory;
-import net.snowyhollows.bento2.annotation.ByName;
-import net.snowyhollows.bento2.annotation.WithFactory;
+
+import net.snowyhollows.bento.annotation.BentoWrapper;
+import net.snowyhollows.bento.annotation.ByFactory;
+import net.snowyhollows.bento.annotation.ByName;
+import net.snowyhollows.bento.annotation.WithFactory;
 
 public class WrapperGenerator extends AbstractProcessor {
 
@@ -60,7 +60,6 @@ public class WrapperGenerator extends AbstractProcessor {
         roundEnv.getElementsAnnotatedWith(BentoWrapper.class);
 
     for (Element element : wrapperInterfaces) {
-      messager.printMessage(Diagnostic.Kind.NOTE, "generating " + element);
       TypeElement wrapperInterface = (TypeElement) element;
 
       ClassName factoryName = factoryNameFor(ClassName.get(wrapperInterface), "Impl");
@@ -70,7 +69,6 @@ public class WrapperGenerator extends AbstractProcessor {
       for (Element enclosedElement : wrapperInterface.getEnclosedElements()) {
         if (enclosedElement instanceof ExecutableElement) {
           ExecutableElement method = (ExecutableElement) enclosedElement;
-          messager.printMessage(Diagnostic.Kind.NOTE, "found method " + element);
 
           TypeName returnType = ClassName.get(method.getReturnType());
           Builder builder =

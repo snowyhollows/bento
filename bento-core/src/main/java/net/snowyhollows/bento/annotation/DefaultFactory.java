@@ -1,7 +1,7 @@
-package net.snowyhollows.bento2.annotation;
+package net.snowyhollows.bento.annotation;
 
-import net.snowyhollows.bento2.Bento;
-import net.snowyhollows.bento2.BentoFactory;
+import net.snowyhollows.bento.Bento;
+import net.snowyhollows.bento.BentoFactory;
 
 public final class DefaultFactory implements BentoFactory<Object> {
 

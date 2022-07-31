@@ -1,4 +1,4 @@
-package net.snowyhollows.bento2.store;
+package net.snowyhollows.bento.store;
 
 public interface BentoStore {
     Object get(Object key);

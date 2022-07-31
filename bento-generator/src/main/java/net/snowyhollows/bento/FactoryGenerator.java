@@ -1,18 +1,33 @@
 package net.snowyhollows.bento;
 
-import com.squareup.javapoet.*;
-import net.snowyhollows.bento2.Bento;
-import net.snowyhollows.bento2.BentoFactory;
-import net.snowyhollows.bento2.BentoResettable;
-import net.snowyhollows.bento2.annotation.*;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
+import net.snowyhollows.bento.annotation.ByFactory;
+import net.snowyhollows.bento.annotation.ByName;
+import net.snowyhollows.bento.annotation.DefaultFactory;
+import net.snowyhollows.bento.annotation.Reset;
+import net.snowyhollows.bento.annotation.WithFactory;
 
-import javax.annotation.processing.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +61,6 @@ public class FactoryGenerator extends AbstractProcessor {
         Set<? extends Element> beans = roundEnv.getElementsAnnotatedWith(WithFactory.class);
 
         for (Element bean : beans) {
-            messager.printMessage(Diagnostic.Kind.NOTE, "generating " + bean);
             ExecutableElement constructor = (ExecutableElement) bean;
             TypeElement beanClass = (TypeElement) constructor.getEnclosingElement();
 	        ExecutableElement resetter = null;
@@ -65,7 +79,7 @@ public class FactoryGenerator extends AbstractProcessor {
             String packageName = beanClassName.packageName();
 
             ParameterizedTypeName bentoFactoryParametrized = ParameterizedTypeName.get(BENTO_FACTORY, beanClassName);
-            ParameterizedTypeName bentoRessetableParametrized = ParameterizedTypeName.get(BENTO_RESETTABLE, beanClassName);
+            ParameterizedTypeName bentoResetableParametrized = ParameterizedTypeName.get(BENTO_RESETTABLE, beanClassName);
 
             MethodSpec.Builder createInContext = MethodSpec.methodBuilder("createInContext")
                     .addParameter(ParameterSpec.builder(Bento.class, "bento").build())
@@ -98,7 +112,7 @@ public class FactoryGenerator extends AbstractProcessor {
 
 	        if (resetter != null) {
 	            factory
-                        .addSuperinterface(bentoRessetableParametrized)
+                        .addSuperinterface(bentoResetableParametrized)
                         .addMethod(reset.build());
             }
 

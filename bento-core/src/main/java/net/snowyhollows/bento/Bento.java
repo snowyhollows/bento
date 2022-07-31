@@ -1,8 +1,8 @@
-package net.snowyhollows.bento2;
+package net.snowyhollows.bento;
 
-import net.snowyhollows.bento2.inspector.BentoInspector;
-import net.snowyhollows.bento2.store.BentoStore;
-import net.snowyhollows.bento2.store.MapStore;
+import net.snowyhollows.bento.inspector.BentoInspector;
+import net.snowyhollows.bento.store.BentoStore;
+import net.snowyhollows.bento.store.MapStore;
 
 public final class Bento {
     private final Bento parent;

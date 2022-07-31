@@ -1,4 +1,4 @@
-package net.snowyhollows.bento2;
+package net.snowyhollows.bento;
 
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.*;

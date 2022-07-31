@@ -1,4 +1,4 @@
-package net.snowyhollows.bento2;
+package net.snowyhollows.bento;
 
 public class BentoException extends RuntimeException {
     public BentoException() {

@@ -1,6 +1,6 @@
-package net.snowyhollows.bento2.inspector;
+package net.snowyhollows.bento.inspector;
 
-import net.snowyhollows.bento2.Bento;
+import net.snowyhollows.bento.Bento;
 
 public interface BentoInspector {
     void createChild(Bento parent, Bento bento);
