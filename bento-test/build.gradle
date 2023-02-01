@@ -1,0 +1,4 @@
+dependencies {
+    annotationProcessor project(":bento-generator")
+    implementation project(':bento-core')
+}

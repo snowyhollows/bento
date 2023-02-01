@@ -1,2 +1,3 @@
 net.snowyhollows.bento.WrapperGenerator
 net.snowyhollows.bento.FactoryGenerator
+net.snowyhollows.bento.ImplementationSwitchGenerator
