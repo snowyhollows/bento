@@ -1,6 +1,7 @@
 package net.snowyhollows.bento;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.*;
 
 public class BentoTest {
@@ -35,9 +36,9 @@ public class BentoTest {
 
     Bento bento = Bento.createRoot();
 
-    @Test(expected = BentoException.class)
+    @Test()
     public void emptyBento() {
-        bento.get("test");
+        assertThatThrownBy(() -> bento.get("test")).isInstanceOf(BentoException.class);
     }
 
     @Test

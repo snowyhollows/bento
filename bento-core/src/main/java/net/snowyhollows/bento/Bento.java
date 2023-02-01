@@ -8,6 +8,8 @@ public final class Bento {
     private final Bento parent;
     private final BentoStore store;
 
+    private final String prefix;
+
     public static BentoInspector inspector = new BentoInspector() {
         @Override
         public void createChild(Bento parent, Bento child) {
@@ -25,12 +27,20 @@ public final class Bento {
         }
     };
 
-    private Bento(Bento parent, BentoStore store) {
+    private Bento(Bento parent, BentoStore store, String prefix) {
         this.parent = parent;
         this.store = store;
+        this.prefix = prefix;
+    }
+
+    private Bento(Bento parent, BentoStore store) {
+        this(parent, store, "");
     }
 
     private Object retrieveObjectOrNull(Object key) {
+        if(key instanceof String) {
+            key = prefix + key;
+        }
         Object result = store.get(key);
         if (result != null) {
             return result;
@@ -85,7 +95,11 @@ public final class Bento {
     }
 
     public Bento create() {
-        Bento bento = new Bento(this, new MapStore());
+        return createWithPrefix("");
+    }
+
+    public Bento createWithPrefix(String prefix) {
+        Bento bento = new Bento(this, new MapStore(), this.prefix + prefix);
         inspector.createChild(this, bento);
         return bento;
     }
@@ -95,6 +109,9 @@ public final class Bento {
     }
 
     public void register(Object key, Object value) {
+        if (key instanceof String) {
+            key = prefix + key;
+        }
         store.put(key, value);
         inspector.createObject(this, key, value);
     }
