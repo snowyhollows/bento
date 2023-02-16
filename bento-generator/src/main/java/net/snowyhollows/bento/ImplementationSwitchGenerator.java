@@ -24,6 +24,7 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
     private Types types;
     private final static ClassName BENTO_FACTORY = ClassName.get(BentoFactory.class);
     private static final ClassName BENTO_EXCEPTION = ClassName.get(BentoException.class);
+    private static final ClassName REFLECTIVE_EXCEPTION = ClassName.get(ReflectiveOperationException.class);
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -59,9 +60,9 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
             if (configKey.equals(ImplementationSwitch.NO_CONFIG_KEY_DEFINED) && implementationSwitch.cases().length == 0) {
                 code.addStatement("throw new $T($S)", BENTO_EXCEPTION, "Implementation of " + pickerClassName + " must be registered manually, e.g. by calling bento.register(" + factoryName.simpleName() + ".IT, someImplementation)");
             } else {
-                code.addStatement("String configKey = bento.getString($S)", configKey);
+                code.addStatement("String configValue = bento.getString($S)", configKey);
 
-                code.beginControlFlow("switch(configKey)");
+                code.beginControlFlow("switch(configValue)");
 
                 for (ImplementationSwitch.When when : implementationSwitch.cases()) {
                     try {
@@ -75,11 +76,24 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
                         messager.printMessage(Diagnostic.Kind.ERROR, new String(out.toByteArray()));
                     }
                 }
+                String classNameRegexp = "([a-z][a-z0-9]*[.])+[A-Z][A-Za-z0-9]*";
+                code.add("default: ")
+                        .indent()
+                        .beginControlFlow("if (configValue.matches($S))", classNameRegexp)
+                        .beginControlFlow("try")
+                        .addStatement("BentoFactory<?> it = (BentoFactory<?>) Class.forName(configValue + $S).getField($S).get(null)", "Factory", "IT")
+                        .addStatement("return ($T)bento.get(it)", pickerClassName)
+                        .endControlFlow()
+                        .beginControlFlow("catch ($T e)", REFLECTIVE_EXCEPTION)
+                        .addStatement("throw new $T($S + configValue + $S)", BENTO_EXCEPTION, "Cold not instantiate class ", " using a default BentoFactory")
+                        .endControlFlow()
+                        .endControlFlow()
+                        .unindent();
+
 
                 code.endControlFlow();
-                code.addStatement("String message = $S + configKey + $S", "No case found for [", "]");
+                code.addStatement("String message = $S + configValue + $S", "No case found for [", "]");
                 code.addStatement("throw new $T(message)", BENTO_EXCEPTION);
-
             }
 
 

@@ -4,7 +4,6 @@ import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoException;
 import net.snowyhollows.bento.test.switcher.cut.JuryMember;
 import net.snowyhollows.bento.test.switcher.cut.JuryMemberFactory;
-import net.snowyhollows.bento.test.switcher.cut.NoImplementations;
 import net.snowyhollows.bento.test.switcher.cut.NoImplementationsFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +48,22 @@ public class ImplementationSwitcherTest {
         Assertions.assertThatThrownBy(() -> root.get(JuryMemberFactory.IT))
                 .isInstanceOf(BentoException.class)
                 .hasMessage("No case found for [hip]");
+    }
+
+    @Test
+    @DisplayName("Should allow usage of implementation not known to the original interface, by using its qualified class name")
+    public void create__by_qn()  {
+        // given
+        Bento root = Bento.createRoot();
+        root.register("jury_member.impl", "net.snowyhollows.bento.test.switcher.cut.AdditionalImplementationOfJuryMember");
+        root.register("decision", 999);
+
+        // execute
+        JuryMember juryMember = root.get(JuryMemberFactory.IT);
+        int numberOfStars = juryMember.getNumberOfStars();
+
+        // assert
+        Assertions.assertThat(numberOfStars).isEqualTo(999);
     }
 
     @Test
