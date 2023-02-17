@@ -36,6 +36,15 @@ public class Configurer {
         return this;
     }
 
+    public Configurer loadConfigResource(String resource) throws IOException {
+        try (Reader reader = new InputStreamReader(this.getClass().getResourceAsStream(resource))) {
+            loadProperties(reader, bento);
+            return this;
+        } catch (Exception e) {
+            throw new IOException("Couldn't read resource " + resource, e);
+        }
+    }
+
     public Configurer setParam(String key, Object value) {
         bento.register(key, value);
         return this;
