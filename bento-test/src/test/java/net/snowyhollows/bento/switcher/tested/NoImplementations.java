@@ -1,4 +1,4 @@
-package net.snowyhollows.bento.test.switcher.cut;
+package net.snowyhollows.bento.switcher.tested;
 
 import net.snowyhollows.bento.annotation.ImplementationSwitch;
 

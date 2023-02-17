@@ -16,16 +16,17 @@
  *
  */
 
-package net.snowyhollows.bento.test.switcher.cut;
+package net.snowyhollows.bento.switcher.tested;
 
-import net.snowyhollows.bento.annotation.ImplementationSwitch;
+import net.snowyhollows.bento.annotation.WithFactory;
 
-@ImplementationSwitch(configKey = "jury_member.impl", cases = {
-        @ImplementationSwitch.When(name = "super", implementation = ExtaticJuryMember.class),
-        @ImplementationSwitch.When(name = "average", implementation = AverageJuryMember.class),
-        @ImplementationSwitch.When(name = "poor", implementation = BlazeJuryMember.class),
-})
-public interface JuryMember {
-    int getNumberOfStars();
+public class AverageJuryMember implements JuryMember {
+    @WithFactory
+    public AverageJuryMember() {
+    }
+
+    @Override
+    public int getNumberOfStars() {
+        return 3;
+    }
 }
-
