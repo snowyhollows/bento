@@ -1,10 +1,10 @@
-package net.snowyhollows.bento.test.switcher;
+package net.snowyhollows.bento.switcher;
 
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoException;
-import net.snowyhollows.bento.test.switcher.cut.JuryMember;
-import net.snowyhollows.bento.test.switcher.cut.JuryMemberFactory;
-import net.snowyhollows.bento.test.switcher.cut.NoImplementationsFactory;
+import net.snowyhollows.bento.switcher.tested.JuryMember;
+import net.snowyhollows.bento.switcher.tested.JuryMemberFactory;
+import net.snowyhollows.bento.switcher.tested.NoImplementationsFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ public class ImplementationSwitcherTest {
     public void create__by_qn()  {
         // given
         Bento root = Bento.createRoot();
-        root.register("jury_member.impl", "net.snowyhollows.bento.test.switcher.cut.AdditionalImplementationOfJuryMember");
+        root.register("jury_member.impl", "net.snowyhollows.bento.switcher.tested.AdditionalImplementationOfJuryMember");
         root.register("decision", 999);
 
         // execute
@@ -75,7 +75,7 @@ public class ImplementationSwitcherTest {
         // execute & assert
         Assertions.assertThatThrownBy(() -> root.get(NoImplementationsFactory.IT))
                 .isInstanceOf(BentoException.class)
-                .hasMessage("Implementation of net.snowyhollows.bento.test.switcher.cut.NoImplementations must be registered manually, e.g. by calling bento.register(NoImplementationsFactory.IT, someImplementation)");
+                .hasMessage("Implementation of net.snowyhollows.bento.switcher.tested.NoImplementations must be registered manually, e.g. by calling bento.register(NoImplementationsFactory.IT, someImplementation)");
     }
 
 }

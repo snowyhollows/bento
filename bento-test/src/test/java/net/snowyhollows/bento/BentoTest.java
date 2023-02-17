@@ -1,5 +1,8 @@
 package net.snowyhollows.bento;
 
+import net.snowyhollows.bento.Bento;
+import net.snowyhollows.bento.BentoException;
+import net.snowyhollows.bento.BentoFactory;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

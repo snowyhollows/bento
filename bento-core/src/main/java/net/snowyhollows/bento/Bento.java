@@ -38,9 +38,24 @@ public final class Bento {
     }
 
     private Object retrieveObjectOrNull(Object key) {
+        Object originalKey = key;
         if(key instanceof String) {
             key = prefix + key;
         }
+        Object result = retrieveObjectOrNullWithoutUsingPrefix(key);
+        if (result != null) {
+            return result;
+        }
+        if (parent != null) {
+            final Object retrievedFromParent = parent.retrieveObjectOrNull(originalKey);
+            if (retrievedFromParent != null) {
+                return retrievedFromParent;
+            }
+        }
+        return null;
+    }
+
+    private Object retrieveObjectOrNullWithoutUsingPrefix(Object key) {
         Object result = store.get(key);
         if (result != null) {
             return result;
