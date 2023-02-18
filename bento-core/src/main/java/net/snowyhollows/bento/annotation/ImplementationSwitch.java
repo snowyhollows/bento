@@ -17,5 +17,6 @@ public @interface ImplementationSwitch {
         String name();
         @SuppressWarnings("rawtypes")
         Class<?> implementation();
+        boolean useByDefault() default false;
     }
 }

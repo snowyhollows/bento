@@ -6,12 +6,10 @@ import net.snowyhollows.bento.BentoFactory;
 import java.util.*;
 
 public abstract class SoftEnumManager<T extends SoftEnum> {
-    private final Bento bento;
     private final List<T> instances;
-    private final Map<String, T> instancesMap = new HashMap<>(127);
+    private final Map<String, T> instancesMap = new HashMap<>(32);
 
     public SoftEnumManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory) {
-        this.bento = bento;
         if(configurationPrefix == null){
             configurationPrefix = this.getClass().getCanonicalName();
         }
@@ -27,8 +25,8 @@ public abstract class SoftEnumManager<T extends SoftEnum> {
             instancesList.add(obj);
             instancesMap.put(instances[i], obj);
         }
-
     }
+
     public List<T> values() {
         return instances;
     }
@@ -44,4 +42,6 @@ public abstract class SoftEnumManager<T extends SoftEnum> {
     public T getByOrdinal(int o) {
         return instances.get(o);
     }
+
+    public abstract T[] emptyArray();
 }

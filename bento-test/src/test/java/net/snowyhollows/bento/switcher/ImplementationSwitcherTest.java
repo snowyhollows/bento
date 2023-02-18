@@ -2,12 +2,12 @@ package net.snowyhollows.bento.switcher;
 
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoException;
-import net.snowyhollows.bento.switcher.tested.JuryMember;
-import net.snowyhollows.bento.switcher.tested.JuryMemberFactory;
-import net.snowyhollows.bento.switcher.tested.NoImplementationsFactory;
+import net.snowyhollows.bento.switcher.tested.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ImplementationSwitcherTest {
     @Test
@@ -34,7 +34,7 @@ public class ImplementationSwitcherTest {
         int numberOfStars = juryMember.getNumberOfStars();
 
         // assert
-        Assertions.assertThat(numberOfStars).isEqualTo(3);
+        assertThat(numberOfStars).isEqualTo(3);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class ImplementationSwitcherTest {
         int numberOfStars = juryMember.getNumberOfStars();
 
         // assert
-        Assertions.assertThat(numberOfStars).isEqualTo(999);
+        assertThat(numberOfStars).isEqualTo(999);
     }
 
     @Test
@@ -76,6 +76,20 @@ public class ImplementationSwitcherTest {
         Assertions.assertThatThrownBy(() -> root.get(NoImplementationsFactory.IT))
                 .isInstanceOf(BentoException.class)
                 .hasMessage("Implementation of net.snowyhollows.bento.switcher.tested.NoImplementations must be registered manually, e.g. by calling bento.register(NoImplementationsFactory.IT, someImplementation)");
+    }
+
+    @Test
+    @DisplayName("Should pick the default implementation")
+    public void create__default() {
+        // given
+        Bento root = Bento.createRoot();
+
+        // execute
+        StringNormalizer stringNormalizer = root.get(StringNormalizerFactory.IT);
+        String result = stringNormalizer.normalize("   ala ma kota   ");
+
+        // assert
+        assertThat(result).isEqualTo("ALA MA KOTA");
     }
 
 }

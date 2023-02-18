@@ -38,6 +38,8 @@ public class SoftEnumTest {
         assertThat(ordinals).containsExactly((byte) 0, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5);
         for (int i = 0; i < colors.values().size(); i++) {
             Color color = colors.getByOrdinal(i);
+            Color color2 = colorList.get(i);
+            assertThat(color).isSameAs(color2);
             assertThat(color.ordinal()).isEqualTo((byte)i);
             assertThat(color.name()).isEqualTo(names.get(i));
         }

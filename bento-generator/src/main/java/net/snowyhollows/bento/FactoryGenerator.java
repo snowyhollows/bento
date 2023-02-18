@@ -15,7 +15,6 @@ import net.snowyhollows.bento.annotation.WithFactory;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
@@ -41,14 +40,12 @@ public class FactoryGenerator extends AbstractProcessor {
     private final static ClassName BENTO = ClassName.get(Bento.class);
 
     private Filer filer;
-    private Messager messager;
     private Types types;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
         filer = processingEnvironment.getFiler();
-        messager = processingEnvironment.getMessager();
         types = processingEnvironment.getTypeUtils();
     }
 
@@ -126,12 +123,14 @@ public class FactoryGenerator extends AbstractProcessor {
     }
 
 	private void writeGettingParametersFromBento(MethodSpec.Builder source, List<? extends VariableElement> parameters) {
+
+
 		boolean first = true;
 		for (VariableElement param : parameters) {
 	        TypeMirror tm = param.asType();
 
 	        if (!first) {
-	            source.addCode(", ");
+	            source.addCode(",\n    ");
 	        }
 
 	        ByName byName = param.getAnnotation(ByName.class);
@@ -145,6 +144,25 @@ public class FactoryGenerator extends AbstractProcessor {
 	            String nameToGet = (byName == null || byName.value().equals("##")) ?
 	                    param.getSimpleName().toString()
 	                    : byName.value();
+
+				boolean hasDefault = (byName != null && !byName.fallbackValue().equals("##"));
+
+				if (hasDefault) {
+					source.addCode("bento.get($S, $S).equals($S) ? ", nameToGet, "##", "##");
+					String coerceDefaultValue = null;
+					if (typeName.equals(TypeName.FLOAT)) {
+						source.addCode("$T.parseFloat($S)", Float.class, byName.fallbackValue());
+					} else if (typeName.equals(TypeName.INT)) {
+						source.addCode("$T.parseInt($S)", Integer.class, byName.fallbackValue());
+					} else if (typeName.equals(TypeName.BOOLEAN)) {
+						source.addCode("$T.parseBoolean($S)", Boolean.class, byName.fallbackValue());
+					} else if (typeName.equals(STRING)) {
+						source.addCode("$S", byName.fallbackValue());
+					} else if (isEnum) {
+						source.addCode("$T.$L", ClassName.get(tm), byName.fallbackValue());
+					}
+					source.addCode(" : ");
+				}
 
 	            String call = null;
 	            if (typeName.equals(TypeName.FLOAT)) {

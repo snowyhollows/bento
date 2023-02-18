@@ -19,4 +19,9 @@ public class Colors extends SoftEnumManager<Color> {
             throw new IllegalStateException("There must be at least BLACK and WHITE color available");
         }
     }
+
+    @Override
+    public Color[] emptyArray() {
+        return new Color[0];
+    }
 }

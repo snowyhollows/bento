@@ -1,27 +1,28 @@
 package net.snowyhollows.bento;
 
 import com.squareup.javapoet.*;
-import net.snowyhollows.bento.annotation.*;
+import net.snowyhollows.bento.annotation.ImplementationSwitch;
 
-import javax.annotation.processing.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 public class ImplementationSwitchGenerator extends AbstractProcessor {
 
     private Filer filer;
 
-    private Messager messager;
-    private Types types;
     private final static ClassName BENTO_FACTORY = ClassName.get(BentoFactory.class);
     private static final ClassName BENTO_EXCEPTION = ClassName.get(BentoException.class);
     private static final ClassName REFLECTIVE_EXCEPTION = ClassName.get(ReflectiveOperationException.class);
@@ -30,8 +31,6 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
         filer = processingEnvironment.getFiler();
-        messager = processingEnvironment.getMessager();
-        types = processingEnvironment.getTypeUtils();
     }
 
     private ClassName factoryNameFor(ClassName type, String suffix) {
@@ -60,21 +59,18 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
             if (configKey.equals(ImplementationSwitch.NO_CONFIG_KEY_DEFINED) && implementationSwitch.cases().length == 0) {
                 code.addStatement("throw new $T($S)", BENTO_EXCEPTION, "Implementation of " + pickerClassName + " must be registered manually, e.g. by calling bento.register(" + factoryName.simpleName() + ".IT, someImplementation)");
             } else {
-                code.addStatement("String configValue = bento.getString($S)", configKey);
+                Optional<ImplementationSwitch.When> firstDefault = Arrays.stream(implementationSwitch.cases()).filter(w -> w.useByDefault()).findFirst();
+
+                if (!firstDefault.isPresent()) {
+                    code.addStatement("String configValue = bento.getString($S)", configKey);
+                } else {
+                    code.addStatement("String configValue = bento.get($S, $S)", configKey, firstDefault.get().name());
+                }
 
                 code.beginControlFlow("switch(configValue)");
 
                 for (ImplementationSwitch.When when : implementationSwitch.cases()) {
-                    try {
-                        code.addStatement("case $S: return bento.get($T.IT)", when.name(), factoryNameFor((ClassName) ClassName.get(extractClassName(when)), "Factory"));
-                    } catch (Exception e) {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        PrintWriter writer = new PrintWriter(out);
-                        writer.println(e.getMessage());
-                        e.printStackTrace(writer);
-                        writer.flush();
-                        messager.printMessage(Diagnostic.Kind.ERROR, new String(out.toByteArray()));
-                    }
+                    code.addStatement("case $S: return bento.get($T.IT)", when.name(), factoryNameFor((ClassName) ClassName.get(extractClassName(when)), "Factory"));
                 }
                 String classNameRegexp = "([a-z][a-z0-9]*[.])+[A-Z][A-Za-z0-9]*";
                 code.add("default: ")
@@ -89,7 +85,6 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
                         .endControlFlow()
                         .endControlFlow()
                         .unindent();
-
 
                 code.endControlFlow();
                 code.addStatement("String message = $S + configValue + $S", "No case found for [", "]");
