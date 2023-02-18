@@ -1,11 +1,8 @@
 package net.snowyhollows.bento;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.*;
 import com.squareup.javapoet.MethodSpec.Builder;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +46,7 @@ public class WrapperGenerator extends AbstractProcessor {
     types = processingEnvironment.getTypeUtils();
   }
 
-  private ClassName factoryNameFor(ClassName type, String suffix) {
+  private ClassName suffixedName(ClassName type, String suffix) {
     return ClassName.get(type.packageName(), type.simpleName() + suffix);
   }
 
@@ -61,8 +58,8 @@ public class WrapperGenerator extends AbstractProcessor {
 
     for (Element element : wrapperInterfaces) {
       TypeElement wrapperInterface = (TypeElement) element;
-
-      ClassName factoryName = factoryNameFor(ClassName.get(wrapperInterface), "Impl");
+      ClassName wrapperClassName = ClassName.get(wrapperInterface);
+      ClassName implName = suffixedName(wrapperClassName, "Impl");
 
       List<MethodSpec.Builder> methodBuilders = new ArrayList<>();
 
@@ -109,7 +106,6 @@ public class WrapperGenerator extends AbstractProcessor {
                   "return scope.get($T.IT)",
                   FactoryGenerator.factoryNameFor((ClassName) returnType, "Factory"));
             } else {
-
               String nameToGet =
                   (byName == null || byName.value().equals("##"))
                       ? method.getSimpleName().toString()
@@ -140,12 +136,12 @@ public class WrapperGenerator extends AbstractProcessor {
         }
       }
 
-      String packageName = ClassName.get(wrapperInterface).packageName();
+      String packageName = wrapperClassName.packageName();
 
-      TypeSpec.Builder factory =
-          TypeSpec.classBuilder(factoryName)
+      TypeSpec.Builder wrapperImplementation =
+          TypeSpec.classBuilder(implName)
               .addModifiers(Modifier.PUBLIC)
-              .addSuperinterface(ClassName.get(wrapperInterface))
+              .addSuperinterface(wrapperClassName)
               .addField(ClassName.get(Bento.class), "bento", Modifier.FINAL, Modifier.PRIVATE)
               .addMethod(
                   MethodSpec.constructorBuilder()
@@ -156,13 +152,28 @@ public class WrapperGenerator extends AbstractProcessor {
                       .build());
 
       for (Builder methodBuilder : methodBuilders) {
-        factory.addMethod(methodBuilder.build());
+        wrapperImplementation.addMethod(methodBuilder.build());
       }
 
+      ParameterizedTypeName bentoFactoryParametrized = ParameterizedTypeName.get(FactoryGenerator.BENTO_FACTORY, wrapperClassName);
+
+      MethodSpec.Builder createInContext = MethodSpec.methodBuilder("createInContext")
+              .addParameter(ParameterSpec.builder(Bento.class, "bento").build())
+              .addModifiers(Modifier.PUBLIC)
+              .returns(wrapperClassName)
+              .addStatement("return $T.IT.createInContext(bento)", suffixedName(implName, "Factory"));
+
+      TypeSpec.Builder factoryImplementation = TypeSpec.enumBuilder(suffixedName(wrapperClassName, "Factory"))
+              .addModifiers(Modifier.PUBLIC)
+              .addEnumConstant("IT")
+              .addSuperinterface(bentoFactoryParametrized)
+              .addMethod(createInContext.build());
+
       try {
-        JavaFile.builder(packageName, factory.build()).build().writeTo(filer);
+        JavaFile.builder(packageName, factoryImplementation.build()).build().writeTo(filer);
+        JavaFile.builder(packageName, wrapperImplementation.build()).build().writeTo(filer);
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage());
       }
     }
     return true;

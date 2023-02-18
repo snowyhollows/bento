@@ -34,10 +34,10 @@ import java.util.Set;
 
 public class FactoryGenerator extends AbstractProcessor {
 
-    private final static ClassName BENTO_FACTORY = ClassName.get(BentoFactory.class);
+    public final static ClassName BENTO_FACTORY = ClassName.get(BentoFactory.class);
     private final static ClassName BENTO_RESETTABLE = ClassName.get(BentoResettable.class);
     private final static ClassName STRING = ClassName.get(String.class);
-    private final static ClassName BENTO = ClassName.get(Bento.class);
+	public final static ClassName BENTO = ClassName.get(Bento.class);
 
     private Filer filer;
     private Types types;
