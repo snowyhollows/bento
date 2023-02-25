@@ -10,4 +10,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface WithFactory {
     String value() default "Factory";
+    String exactName() default "##";
 }

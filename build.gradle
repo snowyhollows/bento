@@ -1,5 +1,5 @@
 group = 'net.snowyhollows.bento'
-version = '1.4.6'
+version = '1.4.7'
 
 subprojects {
     apply plugin: 'java-library'
