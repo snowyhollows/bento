@@ -9,6 +9,7 @@ public interface WorkDir {
     OutputStream openForWriting(File file);
 
     InputStream openForReading(File file);
+    boolean exists(File file);
 
     File[] listFiles(File dir, FileFilter fileFilter);
 }

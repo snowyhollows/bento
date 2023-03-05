@@ -42,6 +42,11 @@ public class DefaultWorkDir implements WorkDir {
     }
 
     @Override
+    public boolean exists(File file) {
+        return this.absolutize(file).exists();
+    }
+
+    @Override
     public File[] listFiles(File dir, FileFilter fileFilter) {
         return absolutize(dir).listFiles(fileFilter);
     }
