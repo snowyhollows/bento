@@ -1,0 +1,4 @@
+- More primitive types allowed for injection (double? long?)
+- Refactor injection
+- Wrap checked exceptions from constructors
+- Split exceptions into BentoInitializationException and BentoNotFoundException
