@@ -4,6 +4,7 @@ import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class SoftEnumManager<T extends SoftEnum> {
     private final List<T> instances;
@@ -15,16 +16,36 @@ public abstract class SoftEnumManager<T extends SoftEnum> {
         }
         List<T> instancesList = new ArrayList<>();
         instances = Collections.unmodifiableList(instancesList);
-        String[] instances = bento.getString(configurationPrefix).split(",");
-        for (int i = 0; i < instances.length; i++) {
-            instances[i] = instances[i].trim();
-            Bento newbento = bento.createWithPrefix(configurationPrefix + "." + instances[i] + ".");
-            newbento.register("name", instances[i]);
+
+        String[] instanceNames = getInstanceNames(bento, configurationPrefix);
+        for (int i = 0; i < instanceNames.length; i++) {
+            instanceNames[i] = instanceNames[i].trim();
+            Bento newbento = bento.createWithPrefix(configurationPrefix + "." + instanceNames[i] + ".");
+            newbento.register("name", instanceNames[i]);
             newbento.register("ordinal", i);
             T obj = newbento.get(tBentoFactory);
             instancesList.add(obj);
-            instancesMap.put(instances[i], obj);
+            instancesMap.put(instanceNames[i], obj);
         }
+    }
+
+    private String[] getInstanceNames(Bento bento, String configurationPrefix) {
+        if (exists(bento, configurationPrefix)) {
+            return Arrays.asList(bento.getString(configurationPrefix).trim().split(","))
+                    .stream().map(String::trim).collect(Collectors.toList()).toArray(new String[0]);
+        }
+
+        List<String> result = new ArrayList<>();
+        int i = 0;
+        while (exists(bento, configurationPrefix + "." + i)) {
+            result.add(bento.getString(configurationPrefix + "." + i).trim());
+            i++;
+        }
+        return result.toArray(new String[0]);
+    }
+
+    private boolean exists(Bento bento, String key) {
+        return bento.get(key, this) != this;
     }
 
     public List<T> values() {

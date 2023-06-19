@@ -44,4 +44,18 @@ public class SoftEnumTest {
             assertThat(color.name()).isEqualTo(names.get(i));
         }
     }
+
+    @Test
+    @DisplayName("Should create enum instances, according to a configuration file with array notation (useful for HOCON files")
+    void createEnumInstances__array_notation() throws IOException {
+        // given
+        Bento bento = new Configurer().loadConfigResource("/soft_enum_array.properties").getConfig();
+        Colors colors = bento.get(ColorsFactory.IT);
+
+        // execute
+        List<String> names = colors.values().stream().map(Color::name).collect(Collectors.toList());
+
+        // assert
+        assertThat(names).containsExactly("BLACK","WHITE","RED","BROWN","GREEN","BLUE");
+    }
 }
