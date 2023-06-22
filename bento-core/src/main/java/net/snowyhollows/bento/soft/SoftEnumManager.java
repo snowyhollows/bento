@@ -11,13 +11,26 @@ public abstract class SoftEnumManager<T extends SoftEnum> {
     private final Map<String, T> instancesMap = new HashMap<>(32);
 
     public SoftEnumManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory) {
+        this(bento, configurationPrefix, tBentoFactory, null);
+    }
+
+
+    public SoftEnumManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory, String instancesPrefix) {
         if(configurationPrefix == null){
             configurationPrefix = this.getClass().getCanonicalName();
         }
         List<T> instancesList = new ArrayList<>();
         instances = Collections.unmodifiableList(instancesList);
 
-        String[] instanceNames = getInstanceNames(bento, configurationPrefix);
+        String[] instanceNames = null;
+
+        if (instancesPrefix == null) {
+            String[] tryWithoutPrefix = getInstanceNames(bento, configurationPrefix);
+            instanceNames = tryWithoutPrefix.length > 0 ? tryWithoutPrefix : getInstanceNames(bento, configurationPrefix + "._");
+        } else {
+            instanceNames = getInstanceNames(bento, configurationPrefix + "." + instancesPrefix);
+        }
+
         for (int i = 0; i < instanceNames.length; i++) {
             instanceNames[i] = instanceNames[i].trim();
             Bento newbento = bento.createWithPrefix(configurationPrefix + "." + instanceNames[i] + ".");
@@ -31,7 +44,7 @@ public abstract class SoftEnumManager<T extends SoftEnum> {
 
     private String[] getInstanceNames(Bento bento, String configurationPrefix) {
         if (exists(bento, configurationPrefix)) {
-            return Arrays.asList(bento.getString(configurationPrefix).trim().split(","))
+            return Arrays.asList(trimBrackets(bento.getString(configurationPrefix)).trim().split(","))
                     .stream().map(String::trim).collect(Collectors.toList()).toArray(new String[0]);
         }
 
@@ -42,6 +55,13 @@ public abstract class SoftEnumManager<T extends SoftEnum> {
             i++;
         }
         return result.toArray(new String[0]);
+    }
+
+    private String trimBrackets(String string) {
+        if (string.startsWith("[") && string.endsWith("]")) {
+            return string.substring(1, string.length() - 1);
+        }
+        return string;
     }
 
     private boolean exists(Bento bento, String key) {
