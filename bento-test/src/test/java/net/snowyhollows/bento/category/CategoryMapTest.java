@@ -1,9 +1,9 @@
-package net.snowyhollows.bento.soft;
+package net.snowyhollows.bento.category;
 
 import net.snowyhollows.bento.Bento;
-import net.snowyhollows.bento.soft.tested.Color;
-import net.snowyhollows.bento.soft.tested.Colors;
-import net.snowyhollows.bento.soft.tested.ColorsFactory;
+import net.snowyhollows.bento.category.tested.Color;
+import net.snowyhollows.bento.category.tested.Colors;
+import net.snowyhollows.bento.category.tested.ColorsFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +14,17 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 
-class SoftEnumMapTest {
+class CategoryMapTest {
 
     Colors colors;
-    SoftEnumMap<Color, Integer> map;
+    CategoryMap<Color, Integer> map;
 
     @BeforeEach
     void before() {
         Bento root = Bento.createRoot();
         root.register("color", "BLACK,WHITE,GOLD");
         colors = root.get(ColorsFactory.IT);
-        map = new SoftEnumMap<>(colors);
+        map = new CategoryMap<>(colors);
     }
 
     @Test

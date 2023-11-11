@@ -1,10 +1,10 @@
-package net.snowyhollows.bento.soft.tested;
+package net.snowyhollows.bento.category.tested;
 
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.annotation.WithFactory;
-import net.snowyhollows.bento.soft.SoftEnumManager;
+import net.snowyhollows.bento.category.CategoryManager;
 
-public class Colors extends SoftEnumManager<Color> {
+public class Colors extends CategoryManager<Color> {
     public final Color WHITE;
     public final Color BLACK;
 

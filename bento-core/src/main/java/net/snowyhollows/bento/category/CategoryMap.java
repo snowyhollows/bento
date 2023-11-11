@@ -1,20 +1,20 @@
-package net.snowyhollows.bento.soft;
+package net.snowyhollows.bento.category;
 
 import java.util.*;
 
 import static java.util.Arrays.fill;
 
-public class SoftEnumMap<K extends SoftEnum, V> implements Map<K, V> {
+public class CategoryMap<K extends Category, V> implements Map<K, V> {
 
     private final Object[] values;
-    private SoftEnumManager<K> manager;
+    private CategoryManager<K> manager;
 
-    public SoftEnumMap(SoftEnumManager<K> manager) {
+    public CategoryMap(CategoryManager<K> manager) {
         this.values = new Object[manager.values().size()];
         this.manager = manager;
     }
 
-    public SoftEnumMap(SoftEnumManager<K> manager, Map<K, V> map) {
+    public CategoryMap(CategoryManager<K> manager, Map<K, V> map) {
         this(manager);
         putAll(map);
     }
@@ -91,7 +91,7 @@ public class SoftEnumMap<K extends SoftEnum, V> implements Map<K, V> {
 
             @Override
             public int size() {
-                return SoftEnumMap.this.size();
+                return CategoryMap.this.size();
             }
         };
     }
@@ -106,7 +106,7 @@ public class SoftEnumMap<K extends SoftEnum, V> implements Map<K, V> {
 
             @Override
             public int size() {
-                return SoftEnumMap.this.size();
+                return CategoryMap.this.size();
             }
         };
     }
@@ -122,12 +122,12 @@ public class SoftEnumMap<K extends SoftEnum, V> implements Map<K, V> {
 
             @Override
             public int size() {
-                return SoftEnumMap.this.size();
+                return CategoryMap.this.size();
             }
         };
     }
 
-    public SoftEnumManager<K> getManager() {
+    public CategoryManager<K> getManager() {
         return manager;
     }
 }

@@ -1,9 +1,9 @@
-package net.snowyhollows.bento.soft.tested;
+package net.snowyhollows.bento.category.tested;
 
 import net.snowyhollows.bento.annotation.WithFactory;
-import net.snowyhollows.bento.soft.SoftEnum;
+import net.snowyhollows.bento.category.Category;
 
-public class Color implements SoftEnum {
+public class Color implements Category {
     private final String name;
     private final byte ordinal;
 

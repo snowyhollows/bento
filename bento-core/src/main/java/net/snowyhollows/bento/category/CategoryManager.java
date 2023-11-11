@@ -1,4 +1,4 @@
-package net.snowyhollows.bento.soft;
+package net.snowyhollows.bento.category;
 
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoFactory;
@@ -6,16 +6,16 @@ import net.snowyhollows.bento.BentoFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class SoftEnumManager<T extends SoftEnum> {
+public abstract class CategoryManager<T extends Category> {
     private final List<T> instances;
     private final Map<String, T> instancesMap = new HashMap<>(32);
 
-    public SoftEnumManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory) {
+    public CategoryManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory) {
         this(bento, configurationPrefix, tBentoFactory, null);
     }
 
 
-    public SoftEnumManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory, String instancesPrefix) {
+    public CategoryManager(Bento bento, String configurationPrefix, BentoFactory<T> tBentoFactory, String instancesPrefix) {
         if(configurationPrefix == null){
             configurationPrefix = this.getClass().getCanonicalName();
         }

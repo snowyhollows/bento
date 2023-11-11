@@ -1,10 +1,10 @@
-package net.snowyhollows.bento.soft;
+package net.snowyhollows.bento.category;
 
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.config.Configurer;
-import net.snowyhollows.bento.soft.tested.Color;
-import net.snowyhollows.bento.soft.tested.Colors;
-import net.snowyhollows.bento.soft.tested.ColorsFactory;
+import net.snowyhollows.bento.category.tested.Color;
+import net.snowyhollows.bento.category.tested.Colors;
+import net.snowyhollows.bento.category.tested.ColorsFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SoftEnumTest {
+public class CategoryTest {
 
     @Test
     @DisplayName("Should create enum instances, according to configuration file")
     void createEnumInstances() throws IOException {
         // given
-        Bento bento = new Configurer().loadConfigResource("/soft_enum.properties").getConfig();
+        Bento bento = new Configurer().loadConfigResource("/category.properties").getConfig();
         Colors colors = bento.get(ColorsFactory.IT);
 
         // execute
@@ -49,7 +49,7 @@ public class SoftEnumTest {
     @DisplayName("Should create enum instances, according to a configuration file with array notation (useful for HOCON files")
     void createEnumInstances__array_notation() throws IOException {
         // given
-        Bento bento = new Configurer().loadConfigResource("/soft_enum_array.properties").getConfig();
+        Bento bento = new Configurer().loadConfigResource("/category_array.properties").getConfig();
         Colors colors = bento.get(ColorsFactory.IT);
 
         // execute
