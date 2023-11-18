@@ -31,15 +31,30 @@ public abstract class CategoryManager<T extends Category> {
             instanceNames = getInstanceNames(bento, configurationPrefix + "." + instancesPrefix);
         }
 
+        List<T> builtIns = getBuiltIns();
+
+        for (T builtIn : builtIns) {
+            instancesMap.put(builtIn.name(), builtIn);
+            instancesList.add(builtIn);
+            if (builtIn.ordinal() != instancesList.size() - 1) {
+                throw new IllegalStateException("Built-in " + builtIn.name() + " has ordinal " + builtIn.ordinal() + " but it should be " + (instancesList.size() - 1));
+            }
+        }
+
         for (int i = 0; i < instanceNames.length; i++) {
             instanceNames[i] = instanceNames[i].trim();
+            int ordinal = instancesList.size();
             Bento newbento = bento.createWithPrefix(configurationPrefix + "." + instanceNames[i] + ".");
             newbento.register("name", instanceNames[i]);
-            newbento.register("ordinal", i);
+            newbento.register("ordinal", ordinal);
             T obj = newbento.get(tBentoFactory);
             instancesList.add(obj);
             instancesMap.put(instanceNames[i], obj);
         }
+    }
+
+    protected List<T> getBuiltIns() {
+        return Collections.emptyList();
     }
 
     private String[] getInstanceNames(Bento bento, String configurationPrefix) {

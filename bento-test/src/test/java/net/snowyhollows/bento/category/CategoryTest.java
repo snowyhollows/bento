@@ -1,10 +1,8 @@
 package net.snowyhollows.bento.category;
 
 import net.snowyhollows.bento.Bento;
+import net.snowyhollows.bento.category.tested.*;
 import net.snowyhollows.bento.config.Configurer;
-import net.snowyhollows.bento.category.tested.Color;
-import net.snowyhollows.bento.category.tested.Colors;
-import net.snowyhollows.bento.category.tested.ColorsFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -57,5 +55,20 @@ public class CategoryTest {
 
         // assert
         assertThat(names).containsExactly("BLACK","WHITE","RED","BROWN","GREEN","BLUE");
+    }
+
+    @Test
+    @DisplayName("Should create enum instances with some predefined values")
+    void createEnumInstances__() throws IOException {
+        // given
+        Bento bento = new Configurer().loadConfigResource("/category_sex.properties").getConfig();
+        SexManager sexManager = bento.get(SexManagerFactory.IT);
+
+        // execute
+        List<Sex> sexes = sexManager.values().stream().collect(Collectors.toList());
+
+        // assert
+        assertThat(sexes).extracting(Sex::name).containsExactly("MALE", "FEMALE", "CALABAI","CALALAI","BISSU");
+        assertThat(sexes).extracting(Sex::ordinal).containsExactly((byte) 0, (byte) 1, (byte) 2, (byte) 3, (byte) 4);
     }
 }
