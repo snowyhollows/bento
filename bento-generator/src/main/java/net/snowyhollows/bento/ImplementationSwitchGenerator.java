@@ -1,6 +1,7 @@
 package net.snowyhollows.bento;
 
 import com.squareup.javapoet.*;
+import net.snowyhollows.bento.annotation.GwtIncompatible;
 import net.snowyhollows.bento.annotation.ImplementationSwitch;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -76,13 +77,8 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
                 code.add("default: ")
                         .indent()
                         .beginControlFlow("if (configValue.matches($S))", classNameRegexp)
-                        .beginControlFlow("try")
-                        .addStatement("BentoFactory<?> it = (BentoFactory<?>) Class.forName(configValue + $S).getField($S).get(null)", "Factory", "IT")
+                        .addStatement("BentoFactory<?> it = instantiateDynamic(configValue)")
                         .addStatement("return ($T)bento.get(it)", pickerClassName)
-                        .endControlFlow()
-                        .beginControlFlow("catch ($T e)", REFLECTIVE_EXCEPTION)
-                        .addStatement("throw new $T($S + configValue + $S)", BENTO_EXCEPTION, "Cold not instantiate class ", " using a default BentoFactory")
-                        .endControlFlow()
                         .endControlFlow()
                         .unindent();
 
@@ -91,20 +87,38 @@ public class ImplementationSwitchGenerator extends AbstractProcessor {
                 code.addStatement("throw new $T(message)", BENTO_EXCEPTION);
             }
 
-
             MethodSpec.Builder createInContext = MethodSpec.methodBuilder("createInContext")
                     .addParameter(ParameterSpec.builder(Bento.class, "bento").build())
                     .addModifiers(Modifier.PUBLIC)
                     .addCode(code.build())
                     .returns(pickerClassName);
 
+            MethodSpec.Builder instantiateDynamic = MethodSpec.methodBuilder("instantiateDynamic")
+                    .addAnnotation(GwtIncompatible.class)
+                    .addParameter(ParameterSpec.builder(String.class, "className").build())
+                    .addModifiers(Modifier.PRIVATE)
+                    .addCode(CodeBlock.builder()
+                            .beginControlFlow("try")
+                            .addStatement("return (BentoFactory<?>) Class.forName(className + $S).getField($S).get(null)", "Factory", "IT")
+                            .nextControlFlow("catch ($T e)", REFLECTIVE_EXCEPTION)
+                            .addStatement("throw new $T($S + className + $S)", BENTO_EXCEPTION, "Cold not instantiate class ", " using a default BentoFactory")
+                            .endControlFlow()
+                            .build())
+                    .returns(ParameterizedTypeName.get(ClassName.get(BentoFactory.class), WildcardTypeName.subtypeOf(Object.class)));
+
+            MethodSpec.Builder instantiateDynamicDummy = MethodSpec.methodBuilder("instantiateDynamic")
+                    .addParameter(ParameterSpec.builder(Object.class, "unused").build())
+                    .addModifiers(Modifier.PRIVATE)
+                    .addStatement("throw new UnsupportedOperationException($S)", "Dynamic configuration is not supported in environments without reflection")
+                    .returns(ParameterizedTypeName.get(ClassName.get(BentoFactory.class), WildcardTypeName.subtypeOf(Object.class)));
+
             TypeSpec.Builder factory = TypeSpec.enumBuilder(factoryName)
                     .addModifiers(Modifier.PUBLIC)
                     .addEnumConstant("IT")
                     .addSuperinterface(bentoFactoryParametrized)
-                    .addMethod(createInContext.build());
-
-
+                    .addMethod(createInContext.build())
+                    .addMethod(instantiateDynamic.build())
+                    .addMethod(instantiateDynamicDummy.build());
             try {
                 JavaFile.builder(packageName, factory.build()).build().writeTo(filer);
             } catch (IOException e) {
