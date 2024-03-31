@@ -2,6 +2,7 @@ package net.snowyhollows.bento.config;
 
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoFactory;
+import net.snowyhollows.bento.annotation.GwtIncompatible;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+@GwtIncompatible
 public class Configurer {
     private final Bento bento;
     private final WorkDir workDir;

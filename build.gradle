@@ -1,5 +1,5 @@
 group = 'net.snowyhollows.bento'
-version = '1.6.3'
+version = '1.7.0'
 
 subprojects {
     apply plugin: 'java-library'
@@ -21,6 +21,7 @@ subprojects {
 
     task sourceJar(type: Jar) {
         from sourceSets.main.allJava
+        from layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main")
         classifier 'sources'
     }
 

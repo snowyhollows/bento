@@ -1,6 +1,6 @@
 publishing {
     publications {
-        configPublication(MavenPublication) {
+        corePublication(MavenPublication) {
             from components.java
             artifact sourceJar
             artifact javadocJar
@@ -13,6 +13,7 @@ publishing {
 }
 
 dependencies {
-    implementation project(':bento-core')
-    annotationProcessor project(':bento-generator')
+    api project(':bento-config')
+    api project(':bento-core')
+    implementation "com.badlogicgames.gdx:gdx:1.12.1"
 }

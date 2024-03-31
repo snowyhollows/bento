@@ -1,5 +1,7 @@
 package net.snowyhollows.bento.config;
 
+import net.snowyhollows.bento.annotation.GwtIncompatible;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -8,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@GwtIncompatible
 public class DefaultWorkDir implements WorkDir {
 
     private final File root;
