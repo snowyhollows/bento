@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import net.snowyhollows.bento.Bento;
 import net.snowyhollows.bento.BentoFactory;
+import net.snowyhollows.bento.config.PropertiesLoaderFactory;
 import net.snowyhollows.bento.config.io.ReaderProvider;
 import net.snowyhollows.bento.config.io.ReaderProviderFactory;
 
@@ -15,6 +16,7 @@ public final class BentoApplicationAdapter implements ApplicationListener {
     private final BentoFactory<? extends ApplicationListener> factory;
     private final Bento bento;
     private final Consumer<Bento> configurer;
+    private final Reader configFile;
     ApplicationListener applicationListener;
 
     public BentoApplicationAdapter(BentoFactory<? extends ApplicationListener> factory) {
@@ -22,13 +24,14 @@ public final class BentoApplicationAdapter implements ApplicationListener {
     }
 
     public BentoApplicationAdapter(BentoFactory<? extends ApplicationListener> factory, Consumer<Bento> configurer) {
-        this(Bento.createRoot(), factory, configurer);
+        this(Bento.createRoot(), factory, configurer, null);
     }
 
-    public BentoApplicationAdapter(Bento bento, BentoFactory<? extends ApplicationListener> factory, Consumer<Bento> configurer) {
+    public BentoApplicationAdapter(Bento bento, BentoFactory<? extends ApplicationListener> factory, Consumer<Bento> configurer, Reader configFile) {
         this.bento = bento;
         this.factory = factory;
         this.configurer = configurer;
+        this.configFile = configFile;
     }
 
     @Override
@@ -43,6 +46,9 @@ public final class BentoApplicationAdapter implements ApplicationListener {
                 return Gdx.files.internal(path).reader();
             }
         });
+        if (configFile != null) {
+            bento.get(PropertiesLoaderFactory.IT).load(configFile);
+        }
         configurer.accept(bento);
         applicationListener = bento.get(factory);
         applicationListener.create();

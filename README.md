@@ -1,439 +1,483 @@
-# Bento - scope-oriented, minimal dependency injection
+# Bento - scope-oriented, pragmatic dependency injection
 
-Dependency Injection allows us, programmers to:
-- only write what we need, not boilerplate;
-- shape the code like clay, not like stone;
-- stay in the flow even when refactoring and trying out new ideas.
+## Introduction
 
-You can start using Bento by with (the quickstart guide)[docs/index.md], or read on the rant explaining the philosophy and the frustration behind it.
+"Dependency" is a mouthful. But it just means "a thing that my code needs to work but can come from outside."
 
-## Unfortunately, Dependency Injection turned into a cult.
+Contrary to popular opinion, in the realm of Java, even basic values like an int, String, or a boolean can be considered dependencies.
 
-DI is a marvelous idea. It empowers true Object-Oriented Programming, because it cuts the burden of object creation and configuration. It makes refactoring easy, it makes testing easy, it allows code reuse - it makes the world a better place.
+When in doubt about whether X is a dependency, a practical approach is to consider if you would like your code to be adaptable by modifying X.
 
-Sounds too good to be true? No. It's even better than it sounds.
+Let's start with a reasonably well written guessing game:
 
-So, what's the problem?
+```java
+public class Game {
 
-DI enabled whole new generation of paradigms - at the cost of losing its identity. The original simplicity dissolved. Dependency Injection turned into a stale buzzword, associated with Aspects Oriented Programming, proxying, reflection, unit testing, writing to interfaces and bloated enterprise solutions. DI became synonymous with "Spring" and using DI in a browser game became synonymous with "overthinking".
+    public static void main(String[] args) {
+        int tries = 10;
+        int rangeMin = 0;
+        int rangeMax = 100;
 
-What started as an enabler - is now seen as a hurdle, because the available tooling, like corporate salesmen, tries to upsell programmers on a whole set of additional programming techniques.
+        int randomNum = rangeMin + (int)(Math.random() * ((rangeMax - rangeMin) + 1));
 
-Time to stop this piggybacking. Writing games for jams,
-coding challenges, one-off scripts, simulations and proof-of-concepts - all these tasks could hugely benefit from DI, but should
-never pay the complexity costs of features like compile-time object-graph validation, runtime scanning or even runtime resolution of services. Those cases need a solid, basic DI with focus on configuration and object life-cycles. This is where Bento comes in.
+        System.out.println("Guess a number between " + rangeMin + " and " + rangeMax + ": ");
 
-### So, what is Dependency Injection, really?
+        Scanner input = new Scanner(System.in);
+        while (tries > 0) {
+            System.out.println("Tries left: " + tries);
+            int guess = input.nextInt();
 
-It's the art of removing any "dependency" from the code, making it more focused, simpler, and easier to refactor. 
+            if (guess == randomNum) {
+                System.out.println("Congratulations! You guessed the number!");
+                break;
+            } else if (guess < randomNum) {
+                System.out.println("Try a higher number.");
+            } else {
+                System.out.println("Try a lower number.");
+            }
 
-A "dependency" can be:
+            tries--;
+        }
+    }
+}
+```
 
-- any piece of configuration (like a file path, a port number, a database connection string),
-- any statically known type (!),
-- any object that is created by the code.
+It could well be the optimal way to write such a game.
 
-Each of the above can be pushed outside, to whoever instantiates the code. And then - pushed further and further, until it reaches some boundary, where at last the configuration can happen. Often this boundary is the entire application (where the dependencies can be read from a configuration file), but it could equally well be any other scope - for example an entire level of a game or a stage of a simulation. Or an object representing a single web request in a web application.
+But humor me and imagine we need to make it reusable in more contexts. Maybe we need the game to work across different platforms, like a browser, a multi-player backend, and Android. Perhaps we want a game where the number of tries decreases, and the range increases with each level.
 
-Handling dependencies is practically the same as handling exceptions - but in the opposite direction (top-to-bottom, whereas the exceptions are handled bottom-to-top). Instead of handling exceptions locally, a well-behaved program should pass any exception upstream, perhaps transforming them somehow. The exceptions, like dependencies, can be handled at the boundary, which can be the entire application (where the exception can simply be thrown from `main`) or some scope (for example - a single request in a web application).
+In the Object-oriented paradigm, we achieve this by separating the dependencies from our logic and stacking them into external classes.
 
-### Show, don't tell
-
-Here's a class with three dependencies: a value, an object and a statically known type:
+The most straightforward way to do it - is **without** using injection. The value dependencies (ints, Strings) can be moved to constants; the configurable pieces of code that provide behavior - become entire classes:
 
 ```java
 
-class MissileFiringAlien {
-    public static final float HOW_OFTEN_FIRES = 1.0f;
-    private float lastFired = 0;
-    
-    public void step() {
-        World world = World.getInstance();
-        if (world.getTime() > lastFired + howOften) {
-            world.spawn(new Missile());
-            lastFired = world.getTime();
+public class Config {
+    public static final int MAX_TRIES = 10;
+    public static final int RANGE_MIN = 0;
+    public static final int RANGE_MAX = 100;
+}
+
+public class InputOutput {
+    public void println(String message) {
+        System.out.println(message);
+    }
+
+    public int nextInt() {
+        Scanner input = new Scanner(System.in);
+        return input.nextInt();
+    }
+}
+
+public class Game {
+    public static void main(String[] args) {
+        int randomNum = Config.RANGE_MIN + (int)(Math.random() * ((Config.RANGE_MAX - Config.RANGE_MIN) + 1));
+        int tries = Config.MAX_TRIES;
+
+        InputOutput inputOutput = new InputOutput();
+
+        inputOutput.println("Guess a number between " + Config.RANGE_MIN + " and " + Config.RANGE_MAX + ": ");
+
+        while (tries > 0) {
+            System.out.println("Tries left: " + tries);
+            int guess = inputOutput.nextInt();
+
+            if (guess == randomNum) {
+                inputOutput.println("Congratulations! You guessed the number!");
+                break;
+            } else if (guess < randomNum) {
+                inputOutput.println("Try a higher number.");
+            } else {
+                inputOutput.println("Try a lower number.");
+            }
+            tries--;
+        }
+    }
+}
+```
+
+The problem is that while dependencies are externalized, they are still hard-coded. There is no way to run multiple instances of the logic simultaneously in a multi-player server with a different range or number of tries because the values always come from the same static fields. Similarly, there's no way to change the implementation of `InputOutput`; even if we extend it and build a `SpecialInputOutput`, the `new` keyword is not polymorphic and will always create an instance of `InputOutput`.
+
+Here's where the "injection" part comes in. Instead of reaching outside from the class to select the values and implementations, we remove all the constructor calls and static field access, replacing them with values passed into our constructor:
+
+```java
+public class Game {
+    private final int rangeMin;
+    private final int rangeMax;
+    private final int maxTries;
+    private final InputOutput inputOutput;
+
+    /** Constructor with the dependencies injected */
+    public Game(int rangeMin, int rangeMax, int maxTries, InputOutput inputOutput) {
+        this.rangeMin = rangeMin;
+        this.rangeMax = rangeMax;
+        this.maxTries = maxTries;
+        this.inputOutput = inputOutput;
+    }
+
+    public void play() {
+        int randomNum =  rangeMin + (int)(Math.random() * ((rangeMax - rangeMin) + 1));
+        int tries = maxTries;
+
+        InputOutput inputOutput = new InputOutput();
+
+        inputOutput.println("Guess a number between " + rangeMin + " and " + rangeMax + ": ");
+
+        while (tries > 0) {
+            System.out.println("Tries left: " + tries);
+            int guess = inputOutput.nextInt();
+
+            if (guess == randomNum) {
+                inputOutput.println("Congratulations! You guessed the number!");
+                break;
+            } else if (guess < randomNum) {
+                inputOutput.println("Try a higher number.");
+            } else {
+                inputOutput.println("Try a lower number.");
+            }
+
+            tries--;
         }
     }
 }
 
 ```
 
-The three dependencies of the code above are:
-- `HOW_OFTEN_FIRES` - a value. It's really part of configuration, but the code makes it impossible to change without recompilation.
-- `World` - it's a singleton. There's no way to control from the outside of `MissileFiringAlien` which `World` instance it should use, there can always be only one.
-- `Missile` - it's a statically known type. There's no way to change the type of missile fired by `MissileFiringAlien`.
+(As an aside: there are other modes of acquiring dependencies, but they share the common core: our code remains passive, it is the caller of our code who is tasked with delivering us everything we need).
 
-Here's the same class, but with dependencies pushed outside:
+The design of the class above is close to optimal with respect to the Object-oriented Paradigm:
+- the class has a single responsibility,
+- the programmer can make anything customizable.
 
-```java
-class MissileFiringAlien {
-    // dependencies
-    private final float howOftenFires;
-    private final World world;
-    private final MissilleSupplier missileSupplier;
+Something to notice and meditate upon - is that each object can require dependencies, but at the same time - it can itself be a dependency of a higher level.
 
-    // state
-    private float lastFired = 0;
-    
-    public MissileFiringAlien(float howOftenFires, World world, MissilleSupplier missileSupplier) {
-        this.howOftenFires = howOftenFires;
-        this.worldSupplier = worldSupplier;
-        this.missileSupplier = missileSupplier;
-    }
-    
-    public void step() {
-        if (world.getTime() > lastFired + howOften) {
-            world.spawn(missileSupplier.get());
-            lastFired = world.getTime();
-        }
-    }
-}
-```
+In fact, all OO programs can be expressed as a single object requiring a set of dependencies - similarly to how any procedural program can be considered a single procedure calling a set of other procedures.
 
-It's slightly longer and pushing the dependencies out does not, in itself solve any problem. The dependencies are the same, and at some stage - they still need to be defined and 
-"injected" (fancy word for passing them into the object at construction or initialization time).
+The remaining problems are just technicalities:
+- The class is less immediate to use - the user needs to know and provide all the dependencies;
+- If the dependencies of the class change, all the instantiations must follow the change.
 
-The benefit is that the maintenance and reuse are radically easier.
+An elegant solution is to use a specialized Dependency Injection framework. Such frameworks take care of building objects, storing them, and passing them around as dependencies. A program written with a DI container is often bootstrapped by creating a single, main object - the entry point - and with all other objects built and provided as its dependencies.
 
-Writing not trivial applications - like scientific simulations, games, web applications and all sorts of creative experiments - is a process of constant refactoring and extending - the opposite to most enterprise applications, where uniformity and stability are the key.
+## Enter Bento
 
-With DI, we can:
-- extend the object with any behavior, by just adding extra dependencies.
-- make the dependencies as small as possible.
-- centralize the configuration into a single place - like a configuration file, or a scope object.
-- move the class to other projects, without problems like: "whops, it requires constants from three other classes, and a singleton".
+Bento is a mature Dependency Injection library optimized for directness and a distinct lack of magic. It is focused on making the DI a viable solution for a wider range of scenarios than ever before. Bento APIs encourage eliminating literally all uses of the `new` keyword and replacing them with dependency injection, although probably few programmers will go that far.
 
-Dependency Injection frees us from:
+### Quick Start
 
-- Passing some global god-object like `Game` or `Config` everywhere, just in case it's needed.
-- Creating huge classes with dozens of public static final fields, and starting each new project by copying them.
-- Configuring applications by invisible and untraceable global settings (which causes your classes to break in mysterious ways when copied to another project)
+The only public-facing class of the bento library - is `Bento`. It represents a map which
+stores all the dependencies of a single context.
 
-### TLDR
+A context represents a configuration for anything that could conceivably require configuring; for example:
 
-Writing to interfaces, Aspect Oriented Programming, testability and Reflection are nice, but 100% of benefits of Dependency Injection can come from not hard-coding dependencies, and instead passing them to the object at construction time. Code dependencies are:
+- the entire application (root configuration),
+- a single server request,
+- a single level in a platform game,
+- a single enemy in the level.
 
-- simple values, like strings or floats (traditional configuration);
-- other objects (also configuration - realizing this is the key to understanding DI);
-- statically known types (like `Missile` in the example above).
+It is perfectly possible to use only one `Bento` instance, but the intention is to use a tree of `Bento`s inheriting from their parents and overriding or adding new values. For example, the root Bento in a web shop can be configured with default value for the currency and the payment provider, but each user session can have separate Bento, overriding those values.
 
-## Bento - the quickstart
-
-Bento provides is three things:
-- `Bento` - a very simple object for storing dependencies in a map. You can `get` or `set` them. Usually interaction with Bento is limited to one or two lines on startup. Bento objects can form a tree hierarchy, where each child can override the parent's values. This is used for creating scopes (i.e. an application scope, a level scope, a single enemy scope).
-- A convention for finding factories for classes by name, so that when an object is needed (Like `World`), Bento knows how to create an instance of that object.
-- A standard Java Annotation Processor, which kicks in during compilation and creates simple glue code. It is not strictly necessary to get all the benefits of Bento, but it makes good job of reducing boilerplate. The code generated by Bento is human-readable, easy to debug and usually is just a single method call.
-
-### Bento itself
-
-#### Bento and simple values
-
-This is NOT a typical use of Bento, but Bento can be used as a simple map for storing values and translating them between strings and simple values / enums:
+Once we have a Bento instance, we can assign values to keys with the `register` method.
 
 ```jshelllanguage
 Bento bento = Bento.createRoot();
-    
-bento.register("number", "12");
-assertThat(bento.getInt("number")).isEqualTo(12);
-assertThat(bento.getFloat("number")).isEqualTo(12);
-assertThat(bento.getString("number")).isEqualTo("12");
+
+// configure the bento
+bento.register("width", 800);
+bento.register("height", 600);
 ```
 
-The idea is that the values can be registered as strings (e.g., from a configuration file), and read back as expected types.
-
-#### Bento and passing dependencies
-
-Bento could be used to implement a service locator pattern - each object could, in theory, receive Bento in its constructor, and read its dependencies from inside.
-
-Like this:
-
-```java
-
-class Box {
-    private final float width;
-    private final float height;
-    
-    // possible, but not recommended
-
-    public Box(Bento bento) {
-        this.width = bento.getFloat("width");
-        this.height = bento.getFloat("height");
-    }
-    
-    // ...
-}
-
-```
-
-Now we could create a Box like this:
+We can also create child bento, and override or add new keys:
 
 ```jshelllanguage
-var bento = Bento.createRoot();
-bento.register("width", "10");
-bento.register("height", "20");
+Bento bento = Bento.createRoot();
 
-// we create a box
-var box = new Box(bento);
-
-// we make the box available to whoever needs it
-bento.register("box", box);
+// ... 
+    
+Bento child = bento.createChild();
+child.register("width", 640);
+child.register("test", true);
 ```
 
-This is sort of OK, but has two problems:
-- the dependencies of Box are invisible from the outside. It's not clear what Box needs to work.
-- there is a dependency on Bento itself - and object which, for most part, should be invisible to the code.
-- we instantitate `box` eagerly aeven though we don't know whether anyone will need it.
+Any value registered in a Bento can be retrieved by one of Bento's typed `getXXX` methods, which attempt to convert the stored value to the type denoted by `XXX`. For example, `bento.getInt("width")` will return an `int` of `800`, but `bento.getFloat("width")` returns a float for the same config key.
 
-Instead, we should create a class with explicit dependencies:
+One of the possible conversions is creating enum instances. Assuming we have an enum with the names of colors, we can register a color as a string and retrieve it as the enum:
 
-```java
-class Box {
-    private final float width;
-    private final float height;
-
-    // recommended: pure, explicit dependencies
-    public Box(float width, float height) {
-        this.width = width;
-        this.height = height;
-    }
-    // ...getters, setters
+```jshelllanguage 
+enum Color {
+    RED, GREEN, BLUE;
 }
-```
-The class above doesn't need Bento at all - and it's clear what it needs to work.
 
-We can now create a factory for it (this is in practice not necessary, we'll see how to avoid the boilerplate soon). Bento convention depends on a factory implemented as an "enum singleton" (as described by Joshua Bloch in "Effective Java"); the enum must implement `BentoFactory<T>` interface, meaning it is a stateless factory, able to produce a `T` object when given a `Bento` instance:
-
-```java
-public enum BoxFactory implements BentoFactory<Box> {
-  IT;
-
-  public Box createInContext(Bento bento) {
-    return new Box(bento.getFloat("width"), bento.getFloat("height"));
-  }
-}
+Bento bento = Bento.createRoot();
+bento.register("color", "RED");
+Color color = bento.getEnum(Color.class, "color");
 ```
 
-As you can see, the object is clear and has explicit dependencies, while its factory depends on `Bento`, but holds no state. It is a singleton - a pure function - a recipe telling us "how to get a `Box` from a `Bento`.
+This string-friendliness makes it easy to connect Bento contexts to configuration files. Bento comes with its own implementation of the ini file parser, allowing us to create a Bento object containing all the configuration values in one go. We could create a file:
 
-The gimmick and the core idea that makes Bento tick is in the special way that keys of the `BentoFactory` type are handled.
+```properties
+# this is an enum:
+color = BLUE
 
-When we try to get an object from Bento using a factory as the key, Bento checks if such key already exists - and if not, it uses the factory to create a single instance and registers it.
+# screen size:
+width=800
+height = 600
+```
 
-This means that:
-- we can call `bento.get(BoxFactory.IT)` many times, we will always get the same box over and over
-- we don't need to register the factories - they will be lazily registered and used the first time they are needed:
+And use it directly:
 
 ```jshelllanguage
-var bento = Bento.createRoot();
 
-bento.register("width", "10");
-bento.register("height", "20");
+Bento bento = PropertiesLoader.loadNew(new FileReader("config.properties"));
 
-if (Math.random() > 0.5) {
-    var box = bento.get(BoxFactory.IT);
-    assertThat(box).isSameAs(bento.get(BoxFactory.IT));
-    assertThat(box.getWidth()).isEqualTo(10);
-    assertThat(box.getHeight()).isEqualTo(20);
-}
-
-```
-Creation of factories is simple but tedious - which is why Bento provides an annotation processor to generate them for you, for constructors marked with `@WithFactory`. The annotation processor works at compile time and the annotations do not persist in the compiled classes or runtime, so they do not pollute the code or add any runtime overhead.
-
-In practice, we don't need to see the factory classes or register anything. We simply mark every constructor of our object with `@WithFactory`. We don't never need to pull `Box` out of context, it's enough to make a parameter of the `Box` type in our class, and the code for extracting the `Box` will be created for us in the factory:
-
-```java
-public class BoxConsumer {
-    private final Box box;
-
-    @WithFactory
-    public BoxConsumer(Box box, String name) {
-        this.box = box;
-        this.name = name;
-    }
-    
-    public void act() {
-        System.println("Hello, " + name + "! I have a box with width " + box.getWidth() + " and height " + box.getHeight());
-   }
-}
-
+Color color = bento.getEnum(Color.class, "color");
+int width = bento.getInt("width");
+int height = bento.getInt("height");
 ```
 
-Behind the cenes, a factory is generated:
+Of course, the point of DI is never to use the getXXX methods directly. Let's imagine we have a class which has all the above values injected:
+
+```jshelllanguage
+class Example {
+    private final Color color;
+    private final int width;
+    private final int height;
+
+	public Example(Color color, int width, int height) {
+		// ...
+	}
+}
+```
+
+Adding a `@WithFactory`annotation above the constructor will trigger the Bento Annotation Processor to generate a singleton with the following factory method:
 
 ```java
-public enum BoxConsumerFactory implements BentoFactory<BoxConsumer> {
+public enum ExampleFactory implements BentoFactory<Example> {
     IT;
 
-    public BoxConsumer createInContext(Bento bento) {
-        return new BoxConsumer(bento.get(BoxFactory.IT), bento.getString("name"));
+    @Override
+    Example createInContext(Bento bento) {
+        return new Example(
+            bento.getEnum(Color.class, "color"),
+            bento.getInt("width"),
+            bento.getInt("height")
+        );
     }
 }
 ```
 
-Note that calls to `bento` are nested - constructing `BoxConsumer` will trigger retrieval of a `Box`. If a box already exits (e.g., because some other object required it) - it will only be retrieved, not recreated. Otherwise, the `BoxFactory` will be used to create a new box. 
+This happens at build-time; no reflection is used, so this solution is both performant and GWT/TeaVM/GraalVM friendly.
 
-In practice, a whole application, having hundreds of objects, can be created from a single factory and a single initial `get` call. Or a single "context" - such as a level, a stage of simulation, a response in a web application.
+We can now create instances of the `Example` class by doing the following:
 
-### Initial config
+```jshelllanguage
+Bento bento = PropertiesLoader.load("config.properties");
+Example e = ExampleFactory.IT.createInContext(bento);
+```
 
-A shape of a basic Bento app is registering any required dependencies (service dependencies need not be registered, so these will usually be just simple configuration values):
+The approach above already has plenty of advantages - to add new configurable values to the `Example` class we only need to add new  arguments to its constructor; the processor will regenerate the factory, and the new keys in the property file will instantly work.
+
+But there's more. `Bento` implements special behavior for retrieving values for keys implementing the BentoFactory<T> - both generated and hand-writte. If the key already has a value associated - the value is simply returned. Otherwise - `Bento` will use the provided factory to generate the value and register it for future use.
+
+In the simplest sense, this means we can save some typing:
+
+```jshelllanguage
+Bento bento = PropertiesLoader.load("config.properties");
+Example e = bento.get(ExampleFactory.IT);
+```
+
+However, the crux of this approach is that it allows for cascading dependencies.
+
+Below is another example class; this one uses both simple values and complex objects as dependencies:
 
 ```java
-public class Main {
+class AnotherExample {
+    @WithFactory
+    public AnotherExample(int width, Example example) {
+        // ...
+    }
+}
+```
+
+The generated factory will use the ExampleFactory to retrieve an Example object:
+
+```java
+
+public enum AnotherExampleFactory implements BentoFactory<AnotherExample> {
+    IT;
+
+    @Override
+    AnotherExample createInContext(Bento bento) {
+        return new AnotherExample(
+            bento.getInt("width"),
+            bento.get(ExampleFactory.IT)
+        );
+    }
+}
+
+```
+
+As we can imagine, The `bento.get` method will be called recursively to construct the whole tree of dependencies required by the top-level class. However, each object type will be constructed only once - since each resolved dependency is immediately stored within the context.
+
+In a typical application using Bento - all the objects are instantiated in one go as dependencies of a single top-level object:
+
+```jshelllanguage
+
+// this is almost any Bento application
+Bento bento = PropertiesLoader.load("config.properties");
+Application app = bento.get(ApplicationFactory.IT);
+app.run();
+```
+
+### Multiple instances of a single type
+
+When writing a bullet-hell game, we could want to create each bullet using DI - so that each bullet can depend on configuration values for speed, color, texture, behavior etc. However, by default, Bento stores any object acquired with `get` and does not create it again.
+
+The straightforward solution, not idiomatic, is to use the factory directly:
+
+```jshelllanguage
+Bullet bullet = BulletFactory.IT.createInContext(bento);
+```
+
+The object creating bullets needs an instance of Bento - fortunately, that is simple enough; bento can be declared as a constructor argument and used as a dependency, like any other class:
+
+```java
+public class Alien {
+    private final Bento bento;
+
+    @WithFactory
+    public Alien(float x, float y, Bento bento) {
+        // ...
+    }
+
+	private void fire() {
+		Bullet bullet = BulletFactory.IT.createInContext(bento);
+		bullet.setX(x);
+		bullet.setY(y);
+		// ...
+	}
+}
+
+```
+
+The approach above works fine in simple cases, but it has two problems:
+the code uses setters, even though initial x and y are clearly the dependencies of the Bullet;
+the code bypasses the Bento's dependency cascading - so it will break as soon as the `Bullet` object depends an instance of another class which needs to be instantiated on a per-bullet basis. Only one instance of such class will be created and it will be subsequently shared by all bullets.
+
+The more general solution is to create a child `Bento` responsible for the `Bullet` context. Any dependency of a `Bento` that has a parent defined is first looked up in the parent; only when it's missing - it is created and stored in the child context.
+
+I will assume that the Bullet class looks somewhat like this:
+```java
+    public class Bullet {
+        @WithFactory
+        public Bullet(float initialX, float initialY) {
+            // ..
+        }
+    }
+```
+The long and explicit solution using a child bento is:
+
+```java
+public class Alien {
+    private final Bento bento;
     
-    public static void main(String[] args) {
-        var bento = Bento.createRoot();
-        bento.register("width", "10");
-        bento.register("height", "20");
-        bento.register("name", "Alice");
-        
-        bento.get(BoxConsumerFactory.IT).act();
-    }
-}
-
-```
-Core Bento library does not have any other special means of registering values, but bento-config (on which bento-gdx depends) provides a way to load configuration from a file.
-
-We can use it like this:
-
-```java
-public class Main {
-    
-    public static void main(String[] args) {
-        var bento = Bento.createRoot();
-        var propertiesLoader = bento.get(PropertiesLoaderFactory.IT);
-        propertiesLoader.configureFromProperties("config.properties");
-        
-        bento.get(BoxConsumerFactory.IT).act();
-    }
-}
-
-```
-config.properties can then be created:
-```properties
-width=10
-height=20
-name=Alice
-```
-
-Let's reflect on this: no matter how big is our object graph, and no matter how far a dependency - we don't need to change the configuration code. It's enough to add a parameter to our constructor, and the parameter is instantly
-configurable via the properties file - all without using reflection or magic.
-
-We can also move the parameters and dependencies between classes without the need to refactor anything around them. If we decide that boxes for "Filip" are to be twice as big, we can experiment with different architectures for achieving this:
-
-```java
-public class Box {
-    private final float width;
-    private final float height;
-
     @WithFactory
-    public Box(float width, float height, String name) {
-        float factor = "Filip".equals(name) ? 2f : 1.0f;
-        this.width = width * factor;
-        this.height = height * factor;
+    public Alien(float x, float y, Bento bento) {
+        // ...
     }
 
-    //...
+	private fire() {
+		Bento bulletBento = bento.createChild();
+		bulletBento.register("initialX", x);
+		bulletBento.register("initialY", y);
+		Bullet bullet = bulletBento.get(BulletFactory.IT);
+		// ...
+	}
 }
+
 ```
 
-Now `name` is passed into `Box` in addition to the size, and the BoxConsumer doesn't need to change.
-
-Or maybe we want the bonus factor configurable?
-
-```properties
-width=10
-height=20
-name=Alice
-bonusFactor=3
-```
+The most idiomatic version which we will see in a second - does exactly what the above version does, but is shorter and easier to maintain.
+We can create an interface for the functionality of creating a child Bento, configuring it with arbitrary values, and creating a new object - and have the annotation processor generate the repetitive code behind it:
 
 ```java
-public class Box {
-    private final float width;
-    private final float height;
-
-    @WithFactory
-    public Box(float width, float height, String name, float bonusFactor) {
-        float factor = "Filip".equals(name) ? bonusFactor : 1.0f;
-        this.width = width * factor;
-        this.height = height * factor;
-    }
-
-    //...
+@BentoWrapper
+interface BulletSpawner {
+    Bullet spawn(float initialX, float initialY);
 }
 ```
 
-Or maybe the logic for calculating the bonus becomes complex and we want to move it to a separate class?
+Bento Annotation Processor will create both an implementation, and a factory of that implementation, so that the final version of the alien class will be simply:
 
 ```java
-public class Box {
-    private final float width;
-    private final float height;
 
+public class Alien {
+    private final BulletSpawner bulletSpawner;
     @WithFactory
-    public Box(float width, float height, BoxSizeBonusCalculator calculator) {
-        float calculatedBonus = calculator.calculateBonus();
-        this.width = calculatedBonus * width;
-        this.height = calculatedBonus * height;
+    public Alien(float x, float y, BulletSpawner bulletSpawner) {
+        // ...
+        this.bulletSpawner = bulletSpawner;
     }
 
-    //...
+	private fire() {
+		Bullet bullet = bulletSpawner(x, y);
+		// ...
+	}
 }
+
+
 ```
+The code might look quite magical, but the additionally generated code is as straightforward as possible:
 
 ```java
-public class BoxSizeBonusCalculator {
-    private final float bonusFactor;
 
-    @WithFactory
-    public BoxSizeBonusCalculator(float bonusFactor, String name, String namesEligibleForBonus) {
-        this.bonusFactor = namesWithBonus.contains(name) ? bonusFactor : 1.0f;
-    }
+public class BulletSpawnerImpl {
+private final Bento bento;
 
-    public float calculateBonus() {
-        return bonusFactor;
+	@WithFactory
+	public BulletSpawnerImpl(Bento bento) {
+		this.bento = bento;
+	}
+
+	@Override
+	Bullet spawn(float initialX, float initialY) {
+		Bento scope = bento.createChild();
+		scope.register("initialX", initialX);
+		scope.register("initialY", initialY);
+		return scope.get(BulletFactory.IT);
+	}
+}
+
+```
+
+And a factory making it the default implementation of the interface:
+
+```java
+public enum BulletSpawner implements BentoFactory<BulletSpawner> {
+    IT;
+    public BulletSpawner createInContext(Bento bento) {
+        return bento.get(BulletSpawnerImplFactory.IT);
     }
 }
+
 ```
 
-Now `Box` requires a `BoxSizeBonusCalculator` to be created, and the `BoxConsumer` still doesn't need to change. Also, more behavior is configurable via properties:
+Note that in the above code the `BulletSpawnerImplFactory` does not need to be generated explicitly, it is generated as the consequence of the `@WithFactory` annotation in the first generated class.
 
-```properties
-width=10
-height=20
-name=Alice
-bonusFactor=3
-namesEligibleForBonus=Filip, Alice
-```
+### Prefixed keys
+[this section is a stub]
 
-The approach to calculating the bonus in the code above might seem sloppy - maybe less behavior should be hard-coded, maybe there should be a map of names, allowing for different people to have different bonus factor... But that's the whole point. Thanks to Bento, the code is easy to refactor, and the dependencies are explicit and easy to understand. We are free to write fast, sloppy code, containing only the pieces of functionality we currently need - because it's so easy to swap parts in and out. The point isn't to make a huge design up-front, but to make a design that can be easily changed, and that keeps us in the flow while we are writing.
+### Categories
+[this section is a stub]
 
-## Bento - more features
+### Switching implementations
+[this section is a stub]
 
-99% of the time the only Bento functionality used is the generation of the factories and storing the configuration. There are, however, some helper classes that can be useful in some advanced scenarios. I urge everyone to ignore these features and use them only when they are really needed.
+### Generic classes
+[this section is a stub]
 
-### Injecting by-name and by-type
+### Resetting objects at runtime
+[this section is a stub]
 
-TODO
-
-### Scopes
-
-TODO
-
-### Implementation switches
-
-TODO
-
-### Factories - the wrapper
-
-TODO
-
-### Categories - instance controlled, configurable objects, aka Dynamic Enums
-
-TODO
-
-### Resettables - dynamic reconfiguration of objects
-
-TODO
-
+### Switching implementations
+[this section is a stub]
