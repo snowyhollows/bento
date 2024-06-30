@@ -1,11 +1,9 @@
 package net.snowyhollows.bento;
 
-import net.snowyhollows.bento.Bento;
-import net.snowyhollows.bento.BentoException;
-import net.snowyhollows.bento.BentoFactory;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class BentoTest {
     private enum Type { A, B }
@@ -125,5 +123,13 @@ public class BentoTest {
         Person person2 = bento.create().get(PERSON);
 
         assertThat(person1).isSameAs(person2);
+    }
+
+    @Test
+    public void factoryGeneratedWithoutExplicitConstructor() {
+        Bento bento = Bento.createRoot();
+        NoExplicitConstructor nec = bento.get(NoExplicitConstructorFactory.IT);
+
+        assertThat(nec).isNotNull();
     }
 }

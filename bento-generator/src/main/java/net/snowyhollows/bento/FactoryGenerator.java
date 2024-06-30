@@ -74,7 +74,7 @@ public class FactoryGenerator extends AbstractProcessor {
 
         for (Element bean : beans) {
 			try {
-				processSingleFactory((ExecutableElement) bean);
+				processSingleFactory(bean);
 			} catch (Exception e) {
 				messager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
 				for (StackTraceElement stackTraceElement : e.getStackTrace()) {
@@ -86,9 +86,12 @@ public class FactoryGenerator extends AbstractProcessor {
         return true;
     }
 
-	private void processSingleFactory(ExecutableElement bean) {
-		ExecutableElement constructor = bean;
-		TypeElement beanClass = (TypeElement) constructor.getEnclosingElement();
+	private void processSingleFactory(Element bean) {
+		ExecutableElement constructor = bean.getKind() == ElementKind.CONSTRUCTOR
+				? (ExecutableElement) bean
+				: null;
+		TypeElement beanClass = constructor != null ? (TypeElement) constructor.getEnclosingElement() : (TypeElement) bean;
+
 		ExecutableElement resetter = null;
 
 		for (Element enclosedElement : beanClass.getEnclosedElements()) {
@@ -99,7 +102,7 @@ public class FactoryGenerator extends AbstractProcessor {
 
 		ClassName beanClassName = ClassName.get(beanClass);
 
-		WithFactory with = constructor.getAnnotation(WithFactory.class);
+		WithFactory with = bean.getAnnotation(WithFactory.class);
 		String suffix = with.value();
 		String exactName = with.exactName();
 		String packageName = beanClassName.packageName();
@@ -117,7 +120,7 @@ public class FactoryGenerator extends AbstractProcessor {
 				.returns(beanClassName)
 				.addCode("return new $T(", beanClassName);
 
-		List<? extends VariableElement> parameters = constructor.getParameters();
+		List<? extends VariableElement> parameters = constructor != null ? constructor.getParameters() : Collections.emptyList();
 		writeGettingParametersFromBento(createInContext, parameters);
 		createInContext.addCode(");\n");
 
